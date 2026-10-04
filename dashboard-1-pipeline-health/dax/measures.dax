@@ -1,0 +1,53 @@
+-- ============================================================
+-- Dashboard 2 (Pipeline Health) — DAX Measures
+-- Source table: scrape_runs_batched
+-- ============================================================
+
+Received = SUM(scrape_runs_batched[total_received])
+
+Kept = SUM(scrape_runs_batched[total_inserted])
+
+Rejected =
+SUM(scrape_runs_batched[total_filtered_products]) + SUM(scrape_runs_batched[total_outliers])
+
+Outliers = SUM(scrape_runs_batched[total_outliers])
+
+Silent Loss =
+SUM(scrape_runs_batched[total_parsed])
+    - SUM(scrape_runs_batched[total_outliers])
+    - SUM(scrape_runs_batched[total_inserted])
+
+-- ------------------------------------------------------------
+-- Percentage measures — all share "Received" as denominator,
+-- so Kept % + Rejected % + Silent Loss % = 100% (reconciliation check)
+-- ------------------------------------------------------------
+
+Kept % =
+VAR received = SUM(scrape_runs_batched[total_received])
+VAR pct = DIVIDE(SUM(scrape_runs_batched[total_inserted]), received)
+RETURN IF(ISBLANK(pct), "no data", FORMAT(pct, "0.0%") & " of received")
+
+Rejected % =
+VAR received = SUM(scrape_runs_batched[total_received])
+VAR pct =
+    DIVIDE(
+        SUM(scrape_runs_batched[total_filtered_products]) + SUM(scrape_runs_batched[total_outliers]),
+        received
+    )
+RETURN IF(ISBLANK(pct), "no data", FORMAT(pct, "0.0%") & " of received")
+
+Outlier % =
+VAR received = SUM(scrape_runs_batched[total_received])
+VAR pct = DIVIDE(SUM(scrape_runs_batched[total_outliers]), received)
+RETURN IF(ISBLANK(pct), "no data", FORMAT(pct, "0.0%") & " of received")
+
+Silent Loss % =
+VAR received = SUM(scrape_runs_batched[total_received])
+VAR pct = DIVIDE([Silent Loss], received)
+RETURN IF(ISBLANK(pct), "no data", FORMAT(pct, "0.0%") & " of received")
+
+-- ------------------------------------------------------------
+-- Received has no meaningful percentage (always 100% of itself) —
+-- static label, not a calculation.
+-- ------------------------------------------------------------
+Received Label = "Total scraped"
