@@ -1,5 +1,5 @@
 -- ============================================================
--- Dashboard 2 (Pipeline Health) — DAX Measures
+-- Dashboard 1 (Pipeline Health) — DAX Measures
 -- Source table: scrape_runs_batched
 -- ============================================================
 
