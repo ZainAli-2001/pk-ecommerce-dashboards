@@ -1,0 +1,82 @@
+-- ============================================================
+-- Dashboard 2 (Market Overview): DAX Measures
+-- Sources: category_daily_price_stats, category_weekly_discounts, source_category
+-- Assumes source and category slicers are single-select (no clear option).
+-- HASONEVALUE guards return blank rather than aggregate across categories.
+-- ============================================================
+
+-- Latest date is taken within the date slicer's range, not the whole table.
+Latest Median Price =
+VAR LatestDate =
+    CALCULATE(
+        MAX(category_daily_price_stats[scrape_date]),
+        ALLSELECTED(date_table[date])
+    )
+RETURN
+    IF(
+        HASONEVALUE(CategoryDim[category]),
+        CALCULATE(
+            MAX(category_daily_price_stats[median_unit_price]),
+            category_daily_price_stats[scrape_date] = LatestDate
+        ),
+        BLANK()
+    )
+
+-- Median of daily IQRs, not the IQR of the whole period.
+Median Daily IQR =
+IF(
+    HASONEVALUE(CategoryDim[category]),
+    MEDIAN(category_daily_price_stats[iqr]),
+    BLANK()
+)
+
+-- Stands in for a thin-sample flag: daily counts range from ~6 to 500+,
+-- so no single threshold fits.
+Min Daily Observations =
+IF(
+    HASONEVALUE(CategoryDim[category]),
+    MIN(category_daily_price_stats[n_observations]),
+    BLANK()
+)
+
+-- First vs last day with data in the slicer range. Returns a fraction;
+-- format as Percentage. The last day may be a partial scrape.
+Price Change % =
+IF(
+    HASONEVALUE(CategoryDim[category]),
+    DIVIDE(
+        CALCULATE(
+            MAX(category_daily_price_stats[median_unit_price]),
+            FILTER(
+                category_daily_price_stats,
+                category_daily_price_stats[scrape_date] = MAX(category_daily_price_stats[scrape_date])
+            )
+        )
+        - CALCULATE(
+            MAX(category_daily_price_stats[median_unit_price]),
+            FILTER(
+                category_daily_price_stats,
+                category_daily_price_stats[scrape_date] = MIN(category_daily_price_stats[scrape_date])
+            )
+        ),
+        CALCULATE(
+            MAX(category_daily_price_stats[median_unit_price]),
+            FILTER(
+                category_daily_price_stats,
+                category_daily_price_stats[scrape_date] = MIN(category_daily_price_stats[scrape_date])
+            )
+        )
+    ),
+    BLANK()
+)
+
+-- Matrix column header. Text, so Sort by column -> week_start.
+Week Label = FORMAT(category_weekly_discounts[week_start], "MMM d")
+
+-- Calculated table (New table). Unique categories for the slicer;
+-- bidirectional relationship to source_category scopes it by source.
+CategoryDim = DISTINCT(source_category[category])
+
+-- Calculated column (New column). Must match the key on source_category
+-- exactly in order and case.
+category_scraper_key = category_daily_price_stats[category] & "|" & category_daily_price_stats[source]
