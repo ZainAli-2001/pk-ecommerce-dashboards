@@ -2,12 +2,12 @@
 
 Power BI dashboards over a Supabase (Postgres) database of scraped grocery prices from Daraz and Naheed. Aggregation is done in SQL views; Power BI only reads the results.
 
+## Dashboard Overview
+
 | # | Dashboard | Question it answers |
 |---|---|---|
 | 1 | [Pipeline Health](dashboard-1-pipeline-health) | Is the scraper keeping, rejecting or silently losing products? |
 | 2 | [Market Overview](dashboard-2-market-overview) | How are prices, price spread and discounting changing per category? |
-
-Previews (both pages, one file per source): [`daraz-preview.pdf`](daraz-preview.pdf), [`naheed-preview.pdf`](naheed-preview.pdf).
 
 ## Repository layout
 
@@ -20,6 +20,11 @@ pk-ecommerce-dashboards/
 │   └── color-legend.md
 ├── dashboard-2-market-overview/
 │   └── (same layout)
+├── screenshots/
+│   ├── daraz-pipeline-health.png
+│   ├── daraz-market-overview.png
+│   ├── naheed-pipeline-health.png
+│   └── naheed-market-overview.png
 ├── daraz-preview.pdf
 ├── naheed-preview.pdf
 └── readme.md
@@ -27,6 +32,33 @@ pk-ecommerce-dashboards/
 
 `.pbix` files are git-ignored. Run `git status --ignored` before each commit to confirm.
 
+## Dashboard Previews
+
+### Daraz
+
+**Pipeline Health**
+
+![Daraz Pipeline Health](screenshots/daraz-pipeline-health.png)
+
+**Market Overview**
+
+![Daraz Market Overview](screenshots/daraz-market-overview.png)
+
+[View both pages in PDF](daraz-preview.pdf)
+
+### Naheed
+
+**Pipeline Health**
+
+![Naheed Pipeline Health](screenshots/naheed-pipeline-health.png)
+
+**Market Overview**
+
+![Naheed Market Overview](screenshots/naheed-market-overview.png)
+
+[View both pages in PDF](naheed-preview.pdf)
+
+## Design Decisions
 
 - **Pre-aggregate in SQL.** Percentiles come from `percentile_cont` in the views, not from DAX or Power Query.
 - **Pipeline filter.** Every query touching `product_prices` filters `pipeline_version = '2.0.0'`, because earlier history is not comparable.
